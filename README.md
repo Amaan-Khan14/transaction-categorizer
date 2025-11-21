@@ -2,6 +2,7 @@
 
 A production-ready, full-stack AI system for categorizing financial transactions with:
 - **96.15% F1-Score** through ensemble machine learning
+- **OCR-powered image classification** for receipts & invoices
 - **Zero external API dependencies** for inference
 - **Professional web UI** with React + FastAPI backend
 - **Dynamic taxonomy configuration** via YAML (150+ Indian brands)
@@ -29,6 +30,12 @@ A production-ready, full-stack AI system for categorizing financial transactions
   - Support Vector Machine (non-linear boundaries)
   - Random Forest (feature interactions)
   - Soft voting for optimal performance
+
+- **OCR-Powered Image Classification**
+  - EasyOCR text extraction from receipts/invoices
+  - Automatic transaction description generation
+  - Handles JPEG, PNG, WebP formats
+  - Extracts both text and categorization from images
 
 - **Robust Preprocessing**
   - Text normalization and tokenization
@@ -190,13 +197,19 @@ The React frontend provides the following pages:
    - Alternative predictions
    - Processing time display
 
-3. **Batch Upload** (`/batch`) - CSV file processing
+3. **Image Classification** (`/image`) - Receipt and invoice scanning
+   - Upload receipt/invoice images
+   - Automatic text extraction via OCR
+   - Categorization of extracted transactions
+   - Explainability for image-based predictions
+
+4. **Batch Upload** (`/batch`) - CSV file processing
    - Upload CSV files with transactions
    - Batch processing results
    - Download categorized results
    - Summary statistics
 
-4. **Feedback** (`/feedback`) - Feedback loop system
+5. **Feedback** (`/feedback`) - Feedback loop system
    - Report incorrect categorizations
    - Help improve the model
    - Track feedback submissions
@@ -216,6 +229,14 @@ Content-Type: application/json
 {
   "transaction": "BigBasket grocery delivery"
 }
+```
+
+#### Image Classification (OCR + Prediction)
+```bash
+POST http://localhost:8000/api/v1/predict/image
+Content-Type: multipart/form-data
+
+file: receipt_image.jpg
 ```
 
 #### Batch Processing
@@ -297,7 +318,9 @@ ghci/
 │   │   ├── pages/
 │   │   │   ├── Dashboard.jsx         # System dashboard
 │   │   │   ├── Predict.jsx           # Single prediction
+│   │   │   ├── ImagePredict.jsx      # Image classification with OCR
 │   │   │   ├── BatchUpload.jsx       # Batch processing
+│   │   │   ├── Insights.jsx          # AI insights & forecasting
 │   │   │   ├── Feedback.jsx          # Feedback submission
 │   │   │   └── ModelPerformance.jsx  # Model metrics
 │   │   ├── services/
@@ -418,6 +441,58 @@ No code changes or retraining required!
 }
 ```
 
+#### Image Classification Response (OCR + Prediction)
+```json
+{
+  "transaction": "Swiggy food order delivery",
+  "predicted_category": "Food & Dining",
+  "confidence": 0.824,
+  "alternatives": [
+    {
+      "category": "Shopping",
+      "confidence": 0.112
+    },
+    {
+      "category": "Entertainment",
+      "confidence": 0.064
+    }
+  ],
+  "explanation": {
+    "top_features": [
+      {
+        "feature": "swiggy",
+        "weight": 0.487,
+        "impact": "strong_positive"
+      },
+      {
+        "feature": "food",
+        "weight": 0.312,
+        "impact": "strong_positive"
+      }
+    ],
+    "model_votes": {
+      "logistic_regression": {
+        "category": "Food & Dining",
+        "confidence": 0.91
+      },
+      "svm": {
+        "category": "Food & Dining",
+        "confidence": 0.78
+      },
+      "random_forest": {
+        "category": "Food & Dining",
+        "confidence": 0.74
+      }
+    }
+  },
+  "metadata": {
+    "processing_time_ms": 245.32,
+    "model_version": "1.0.0",
+    "timestamp": "2025-11-21T10:35:00Z"
+  }
+}
+```
+
 #### Batch Upload Response
 ```json
 {
@@ -482,6 +557,7 @@ pytest tests/ --cov=src --cov-report=html
 ### Backend
 - **Framework**: FastAPI (async, auto-docs)
 - **ML Models**: Scikit-learn ensemble (Logistic Regression + SVM + Random Forest)
+- **OCR**: EasyOCR for image text extraction (receipts, invoices)
 - **Features**: TF-IDF + character n-grams
 - **Documentation**: Swagger UI + ReDoc
 
@@ -492,10 +568,12 @@ pytest tests/ --cov=src --cov-report=html
 - **Styling**: Custom CSS with variables
 
 ### ML Pipeline
-- **Preprocessing**: Text normalization, TF-IDF vectorization
+- **Text Input**: Single & batch transaction prediction
+- **Image Input**: OCR-based receipt/invoice classification
+- **Preprocessing**: Text normalization, TF-IDF vectorization, character n-grams
 - **Models**: Soft voting ensemble for optimal performance
-- **Explainability**: Confidence scores and alternative predictions
-- **Monitoring**: Per-category performance tracking
+- **Explainability**: LIME-based feature attribution, confidence scores, alternative predictions
+- **Monitoring**: Per-category performance tracking, bias auditing
 
 ## Future Enhancements
 
